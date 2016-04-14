@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<customUI onLoad="Ribbon_Load" xmlns="http://schemas.microsoft.com/office/2006/01/customui">
+    <ribbon>
+        <tabs>
+            <tab idMso="TabAddIns" label="APEEEC-Encryption">
+              <group id="APEEEC_Group" label="APEEEC">
+                <toggleButton id="encryptEmailToggleButton" label="Encrypt Message" getImage="logoGetImage" size="large" onAction="OnEncryptEmailToggleButton" />
+              </group>
+            </tab>
+        </tabs>
+    </ribbon>
+</customUI>
