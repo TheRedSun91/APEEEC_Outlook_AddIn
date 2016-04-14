@@ -13,7 +13,6 @@ namespace APEEEC_Outlook_AddIn
 {
     public partial class ThisAddIn
     {
-
         Outlook.Inspectors _inspectors;
         private APEEEC_Broker _broker;
         private static Logger logger = LogManager.GetCurrentClassLogger();
@@ -45,112 +44,34 @@ namespace APEEEC_Outlook_AddIn
                 String senderEmail = keyManager.getEmailOfCurrentUser();
                 if (KeyAvailableForEmail(senderEmail))
                 {
-                    KeyId signKeyID = keyManager.GetSignKeyIDForEmail(senderEmail);
                     //check for each recipient of the current mail item if a public key is available
                     foreach (Outlook.Recipient currentRecipient in currentMailItem.Recipients)
                     {
-
-                        //get real smtp email address from exchange address
+                        //get real smtp email address from exchange server
                         Outlook.PropertyAccessor propAccessorForRecipient = currentRecipient.PropertyAccessor;
                         String recipientEmail = keyManager.getEmailFromPropertyAccessor(propAccessorForRecipient);
                         if (KeyAvailableForEmail(recipientEmail))
                         {
-                            //remove current recipient from mail item
-                            currentMailItem.Recipients.Remove(currentRecipient.Index);
-
-                            //create new mail item
-                            Outlook.Application app = new Outlook.Application();
-                            Outlook.MailItem newMailItem = app.CreateItem(Outlook.OlItemType.olMailItem);
-
-                            //add recipient to new mail item
-                            newMailItem.Recipients.Add(currentRecipient.Name);
-
-                            //convert all data from current mail to new mail item
-                            //newMailItem.Sender.Address = currentMailItem.Sender.Address;
-
-                            //ok, start encryption, sign email, send email
-                            Encrypter encrypter = _broker.GetEncryptionHandler().getEncrypter();
-                            //save file and set filename
-                            String fileName = Path.GetTempFileName();
-                            File.WriteAllText(fileName, currentMailItem.Body);
-
-                            //set encrypted filename from normal filename plus encrypted
-                            String encryptedFileName = Path.GetTempFileName();
-
-                            //get recipient key and add it to a list. if there are more recipients, add more
-                            Key key = keyManager.GetPublicKey(recipientEmail);
-                            IList<KeyId> recipients = new List<KeyId>();
-                            recipients.Add(key.Id);
-
-                            //create encrypter and set all values accordingly
-                            GpgInterfaceResult gpgInterfaceResult = encrypter.EncryptFile(fileName, encryptedFileName, true, false, signKeyID, recipients, CipherAlgorithm.Aes256);
-
-                            //add all encrypted value to new mail body
-                            newMailItem.Body = File.ReadAllText(encryptedFileName);
-
-                            //delete temporary files
-                            File.Delete(fileName);
-                            File.Delete(encryptedFileName);
-
-                            /*
-                            newMailItem.Body += "___________________________________";
-                            newMailItem.Body += "Encryption added by APEEEC-Protocol";
-                            */
-                            newMailItem.Send();
+                            EncryptAndSendEmail(currentMailItem, currentRecipient, keyManager, recipientEmail, senderEmail);
                         }
                         else
                         {
-                            List<Outlook.Recipient> remainingRecipients = new List<Outlook.Recipient>();
-                            //remove all recipients which are working and save item
-                            foreach (Outlook.Recipient recipientToDelete in currentMailItem.Recipients)
-                            {
-                                if (!recipientToDelete.Equals(currentRecipient))
-                                {
-                                    currentMailItem.Recipients.Remove(recipientToDelete.Index);
-                                    remainingRecipients.Add(recipientToDelete);
-                                }
-                            }
-                            currentMailItem.Save();
-
-                            //put remaining recipients back so the currentmail still has them
-                            foreach (Outlook.Recipient deletedRecipient in remainingRecipients)
-                            {
-                                currentMailItem.Recipients.Add(deletedRecipient.Name);
-                            }
+                            RemoveRecipientFromCurrentMailAndSaveIndividually(currentMailItem, currentRecipient);
 
                             //start key exchange
                             //get Public Key and send it to the recipient for importing the key in a new mail!
-
-
-                            //add some usability (ask user if he wants to do that etc.)
-                            KeyExchangeStartForm keyExchangeStartForm = new KeyExchangeStartForm();
-                            System.Windows.Forms.DialogResult dresult = keyExchangeStartForm.ShowDialog();
-                            if (dresult.Equals(System.Windows.Forms.DialogResult.OK))
-                            {
-                                keyExchangeStartForm.Dispose();
-                                //create a new mail
-                                Outlook.MailItem newMail = this.Application.CreateItem(Outlook.OlItemType.olMailItem) as Outlook.MailItem;
-
-                                //start key exchange process (send encrypted communication request)
-                                keyManager.StartKeyExchange(newMail, senderEmail, currentRecipient);
-
-                                ConfirmationKeyExchangeForm confirmationKeyExchangeForm = new ConfirmationKeyExchangeForm();
-                                confirmationKeyExchangeForm.Show();
-                            }
-                            else
-                            {
-                                ErrorKeyExchangeForm errorKeyExchangeForm = new ErrorKeyExchangeForm();
-                                errorKeyExchangeForm.Show();
-                            }
+                            StartKeyExchange(keyManager, senderEmail, currentRecipient);
                         }
                     }
                     if (currentMailItem.Recipients.Count > 0)
                     {
                         Cancel = true; //do not send current mail
                         currentMailItem.Save();
+                        currentMailItem = null;
                     }
                     else
                     {
+                        Cancel = true;
                         currentMailItem.Delete();
                     }
                 }
@@ -163,6 +84,99 @@ namespace APEEEC_Outlook_AddIn
                     Cancel = true;
                 }
             }
+        }
+
+        private void RemoveRecipientFromCurrentMailAndSaveIndividually(Outlook.MailItem currentMailItem, Outlook.Recipient currentRecipient)
+        {
+            List<Outlook.Recipient> remainingRecipients = new List<Outlook.Recipient>();
+            //move all remaining recipients to other collection
+            foreach (Outlook.Recipient recipientToDelete in currentMailItem.Recipients)
+            {
+                if (!recipientToDelete.Equals(currentRecipient))
+                {
+                    currentMailItem.Recipients.Remove(recipientToDelete.Index);
+                    remainingRecipients.Add(recipientToDelete);
+                }
+            }
+            //save current mail item with the recipient who has no public key
+            currentMailItem.Save();
+
+            //put remaining recipients back so the current mail item still has them
+            foreach (Outlook.Recipient deletedRecipient in remainingRecipients)
+            {
+                currentMailItem.Recipients.Add(deletedRecipient.Name);
+            }
+        }
+
+        private void StartKeyExchange(KeyManager keyManager, String senderEmail, Outlook.Recipient currentRecipient)
+        {
+
+            KeyExchangeStartForm keyExchangeStartForm = new KeyExchangeStartForm();
+            System.Windows.Forms.DialogResult dresult = keyExchangeStartForm.ShowDialog();
+            if (dresult.Equals(System.Windows.Forms.DialogResult.OK))
+            {
+                keyExchangeStartForm.Dispose();
+                //create a new mail
+                Outlook.MailItem newMail = this.Application.CreateItem(Outlook.OlItemType.olMailItem) as Outlook.MailItem;
+
+                //start key exchange process (send encrypted communication request)
+                keyManager.StartKeyExchange(newMail, senderEmail, currentRecipient);
+
+                ConfirmationKeyExchangeForm confirmationKeyExchangeForm = new ConfirmationKeyExchangeForm();
+                confirmationKeyExchangeForm.Show();
+            }
+            else
+            {
+                ErrorKeyExchangeForm errorKeyExchangeForm = new ErrorKeyExchangeForm();
+                errorKeyExchangeForm.Show();
+            }
+        }
+
+        private void EncryptAndSendEmail(Outlook.MailItem currentMailItem, Outlook.Recipient currentRecipient, KeyManager keyManager, String recipientEmail, String senderEmail)
+        {
+
+            //remove current recipient from mail item
+            currentMailItem.Recipients.Remove(currentRecipient.Index);
+
+            //create new mail item
+            Outlook.Application app = new Outlook.Application();
+            Outlook.MailItem newMailItem = app.CreateItem(Outlook.OlItemType.olMailItem);
+
+            //add recipient to new mail item
+            newMailItem.Recipients.Add(currentRecipient.Name);
+
+            //convert all data from current mail to new mail item
+            //newMailItem.Sender.Address = currentMailItem.Sender.Address;
+
+            //ok, start encryption, sign email, send email
+            Encrypter encrypter = _broker.GetEncryptionHandler().getEncrypter();
+            //save file and set filename
+            String fileName = Path.GetTempFileName();
+            File.WriteAllText(fileName, currentMailItem.Body);
+
+            //set encrypted filename from normal filename plus encrypted
+            String encryptedFileName = Path.GetTempFileName();
+
+            //get recipient key and add it to a list. if there are more recipients, add more
+            Key key = keyManager.GetPublicKey(recipientEmail);
+            IList<KeyId> recipients = new List<KeyId>();
+            recipients.Add(key.Id);
+
+            //create encrypter and set all values accordingly
+            GpgInterfaceResult gpgInterfaceResult = encrypter.EncryptFile(fileName, encryptedFileName, true, false, keyManager.GetSignKeyIDForEmail(senderEmail), recipients, CipherAlgorithm.Aes256);
+
+            //add all encrypted value to new mail body
+            newMailItem.Body = File.ReadAllText(encryptedFileName);
+
+            //delete temporary files
+            File.Delete(fileName);
+            File.Delete(encryptedFileName);
+
+            /*
+            newMailItem.Body += "___________________________________";
+            newMailItem.Body += "Encryption added by APEEEC-Protocol";
+            */
+            newMailItem.Send();
         }
 
         private bool KeyAvailableForEmail (String email)
