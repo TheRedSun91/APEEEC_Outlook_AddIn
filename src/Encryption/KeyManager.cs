@@ -5,6 +5,7 @@ using Outlook = Microsoft.Office.Interop.Outlook;
 using System.IO;
 using APEEEC_Outlook_AddIn.src.Forms.Certification;
 using NLog;
+using APEEEC_Outlook_AddIn.src.WorkflowHandler;
 
 namespace APEEEC_Outlook_AddIn.src.Encryption
 {
@@ -69,6 +70,7 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
                     attachment.SaveAsFile(savedFile);
                     GpgImportKey importingKey = new GpgImportKey(savedFile);
                     GpgInterfaceResult result = importingKey.Execute();
+                    CallbackHandler.Callback(result, logger);
                     logger.Warn("Error-Handling required");
                     logger.Info("Importing key from message attachment successful.");
                     File.Delete(savedFile);
@@ -93,6 +95,7 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
             Name name = new Name(nameString);
             GpgGenerateKey generateKey = new GpgGenerateKey(name, email, comment, algorithm, size, expirationDate);
             GpgInterfaceResult result = generateKey.Execute();
+            CallbackHandler.Callback(result, logger);
             logger.Warn("Error-Handling required");
             //logger.Info("Importing key from message attachment successful.");
             //logger.Info("Importing key from message attachment failed.");
@@ -157,7 +160,8 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
         internal KeyId GetSignKeyIDForEmail(String email)
         {
             _privateKeys = new GpgListSecretKeys();
-            _privateKeys.Execute();
+            GpgInterfaceResult result = _privateKeys.Execute();
+            CallbackHandler.Callback(result, logger);
 
             foreach (Key key in _privateKeys.Keys)
             {
@@ -175,7 +179,8 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
         private String ExportPublicKeyToFile (Key publicKey, String senderEmail)
         {
             GpgExportKey gpgExportKey = new GpgExportKey(publicKey.Id, false);
-            gpgExportKey.Execute();
+            GpgInterfaceResult result = gpgExportKey.Execute();
+            CallbackHandler.Callback(result, logger);
 
             String keyAsString = gpgExportKey.ExportedKey;
 
@@ -242,7 +247,8 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
         internal void ReLoadPublicKeys()
         {
             _publicKeys = new GpgListPublicKeys();
-            _publicKeys.Execute();
+            GpgInterfaceResult result = _publicKeys.Execute();
+            CallbackHandler.Callback(result, logger);
             logger.Info("Public keys list reloaded.");
         }
     }

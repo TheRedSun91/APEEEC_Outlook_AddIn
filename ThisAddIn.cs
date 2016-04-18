@@ -1,5 +1,4 @@
 ﻿using APEEEC_Outlook_AddIn.src.Encryption;
-using APEEEC_Outlook_AddIn.src.Forms.Certification;
 using APEEEC_Outlook_AddIn.src.Forms.KeyExchange;
 using APEEEC_Outlook_AddIn.src.WorkflowHandler;
 using GpgApi;
@@ -134,49 +133,58 @@ namespace APEEEC_Outlook_AddIn
 
         private void EncryptAndSendEmail(Outlook.MailItem currentMailItem, Outlook.Recipient currentRecipient, KeyManager keyManager, String recipientEmail, String senderEmail)
         {
+            try
+            {
+                //remove current recipient from mail item
+                currentMailItem.Recipients.Remove(currentRecipient.Index);
 
-            //remove current recipient from mail item
-            currentMailItem.Recipients.Remove(currentRecipient.Index);
+                //create new mail item
+                Outlook.Application app = new Outlook.Application();
+                Outlook.MailItem newMailItem = app.CreateItem(Outlook.OlItemType.olMailItem);
 
-            //create new mail item
-            Outlook.Application app = new Outlook.Application();
-            Outlook.MailItem newMailItem = app.CreateItem(Outlook.OlItemType.olMailItem);
+                //add recipient to new mail item
+                newMailItem.Recipients.Add(currentRecipient.Name);
 
-            //add recipient to new mail item
-            newMailItem.Recipients.Add(currentRecipient.Name);
+                //convert all data from current mail to new mail item
+                //newMailItem.Sender.Address = currentMailItem.Sender.Address;
 
-            //convert all data from current mail to new mail item
-            //newMailItem.Sender.Address = currentMailItem.Sender.Address;
+                //ok, start encryption, sign email, send email
+                Encrypter encrypter = _broker.GetEncryptionHandler().getEncrypter();
+                //save file and set filename
+                String fileName = Path.GetTempFileName();
+                File.WriteAllText(fileName, currentMailItem.Body);
 
-            //ok, start encryption, sign email, send email
-            Encrypter encrypter = _broker.GetEncryptionHandler().getEncrypter();
-            //save file and set filename
-            String fileName = Path.GetTempFileName();
-            File.WriteAllText(fileName, currentMailItem.Body);
+                //set encrypted filename from normal filename plus encrypted
+                String encryptedFileName = Path.GetTempFileName();
 
-            //set encrypted filename from normal filename plus encrypted
-            String encryptedFileName = Path.GetTempFileName();
+                //get recipient key and add it to a list. if there are more recipients, add more
+                Key key = keyManager.GetPublicKey(recipientEmail);
+                IList<KeyId> recipients = new List<KeyId>();
+                recipients.Add(key.Id);
 
-            //get recipient key and add it to a list. if there are more recipients, add more
-            Key key = keyManager.GetPublicKey(recipientEmail);
-            IList<KeyId> recipients = new List<KeyId>();
-            recipients.Add(key.Id);
+                //create encrypter and set all values accordingly
+                GpgInterfaceResult result = encrypter.EncryptFile(fileName, encryptedFileName, true, false, keyManager.GetSignKeyIDForEmail(senderEmail), recipients, CipherAlgorithm.Aes256);
+                CallbackHandler.Callback(result, logger);
 
-            //create encrypter and set all values accordingly
-            GpgInterfaceResult gpgInterfaceResult = encrypter.EncryptFile(fileName, encryptedFileName, true, false, keyManager.GetSignKeyIDForEmail(senderEmail), recipients, CipherAlgorithm.Aes256);
+                //add all encrypted value to new mail body
+                newMailItem.Body = File.ReadAllText(encryptedFileName);
 
-            //add all encrypted value to new mail body
-            newMailItem.Body = File.ReadAllText(encryptedFileName);
+                //delete temporary files
+                File.Delete(fileName);
+                File.Delete(encryptedFileName);
 
-            //delete temporary files
-            File.Delete(fileName);
-            File.Delete(encryptedFileName);
+                /*
+                newMailItem.Body += "___________________________________";
+                newMailItem.Body += "Encryption added by APEEEC-Protocol";
+                */
+                newMailItem.Send();
 
-            /*
-            newMailItem.Body += "___________________________________";
-            newMailItem.Body += "Encryption added by APEEEC-Protocol";
-            */
-            newMailItem.Send();
+            }
+            catch (KeyNotFoundException keyNotFoundException)
+            {
+                logger.Warn("Key Not Found!");
+                Console.WriteLine(keyNotFoundException.Message);
+            }
         }
 
         private bool KeyAvailableForEmail (String email)

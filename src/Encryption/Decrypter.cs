@@ -7,7 +7,6 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
     class Decrypter : IDecrypter
     {
         private GpgDecrypt _gpgDecrypter;
-        //private static String _tempPath = System.IO.Path.GetTempPath();
 
         public GpgInterfaceResult DecryptFile(String encryptedFileName, String decryptedFileName)
         {

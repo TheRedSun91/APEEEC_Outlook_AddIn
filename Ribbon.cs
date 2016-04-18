@@ -8,8 +8,8 @@ using Office = Microsoft.Office.Core;
 using Outlook = Microsoft.Office.Interop.Outlook;
 using APEEEC_Outlook_AddIn.src.Encryption;
 using APEEEC_Outlook_AddIn.src.WorkflowHandler;
-using APEEEC_Outlook_AddIn.src.Forms.Certification;
 using NLog;
+using GpgApi;
 
 // TODO:  Führen Sie diese Schritte aus, um das Element auf dem Menüband (XML) zu aktivieren:
 
@@ -172,7 +172,8 @@ namespace APEEEC_Outlook_AddIn
                     String encryptedFileName = Path.GetTempFileName();
                     String decryptedFileName = Path.GetTempFileName();
                     File.WriteAllText(encryptedFileName, currentMailItem.Body);
-                    encryptionHandler.getDecrypter().DecryptFile(encryptedFileName, decryptedFileName);
+                    GpgInterfaceResult result = encryptionHandler.getDecrypter().DecryptFile(encryptedFileName, decryptedFileName);
+                    CallbackHandler.Callback(result, logger);
                     currentMailItem.Body = File.ReadAllText(decryptedFileName);
 
                     //only delete if mail is being closed? or doesnt matter?
