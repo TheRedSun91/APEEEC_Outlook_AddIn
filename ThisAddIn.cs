@@ -1,4 +1,5 @@
 ﻿using APEEEC_Outlook_AddIn.src.Encryption;
+using APEEEC_Outlook_AddIn.src.Forms.EncryptedCommunication;
 using APEEEC_Outlook_AddIn.src.Forms.KeyExchange;
 using APEEEC_Outlook_AddIn.src.WorkflowHandler;
 using GpgApi;
@@ -43,6 +44,7 @@ namespace APEEEC_Outlook_AddIn
                 String senderEmail = keyManager.getEmailOfCurrentUser();
                 if (KeyAvailableForEmail(senderEmail))
                 {
+                    logger.Info("Sending Item started.");
                     //check for each recipient of the current mail item if a public key is available
                     foreach (Outlook.Recipient currentRecipient in currentMailItem.Recipients)
                     {
@@ -51,31 +53,38 @@ namespace APEEEC_Outlook_AddIn
                         String recipientEmail = keyManager.getEmailFromPropertyAccessor(propAccessorForRecipient);
                         if (KeyAvailableForEmail(recipientEmail))
                         {
+                            logger.Info("Encryption and Sending message started for: " + recipientEmail);
                             EncryptAndSendEmail(currentMailItem, currentRecipient, keyManager, recipientEmail, senderEmail);
+                            logger.Info("Encryption and Sending message finished.");
                         }
                         else
                         {
+                            logger.Info("No key for recipient available. Current mail item saved for: " + recipientEmail);
                             RemoveRecipientFromCurrentMailAndSaveIndividually(currentMailItem, currentRecipient);
 
                             //start key exchange
                             //get Public Key and send it to the recipient for importing the key in a new mail!
+                            logger.Info("Key exchange process started for: " + recipientEmail);
                             StartKeyExchange(keyManager, senderEmail, currentRecipient);
                         }
                     }
                     if (currentMailItem.Recipients.Count > 0)
                     {
+                        logger.Info("All active recipients for this message handled. Inactive recipients messages have been saved.");
                         Cancel = true; //do not send current mail
                         currentMailItem.Save();
                         currentMailItem = null;
                     }
                     else
                     {
+                        logger.Info("Message encrypted and sent to all recipients.");
                         Cancel = true;
                         currentMailItem.Delete();
                     }
                 }
                 else
                 {
+                    logger.Info("User has no key pair. Key certification started.");
                     //abort sending email, start certification
                     keyManager.StartCertification();
                     currentMailItem.Save();
@@ -105,6 +114,7 @@ namespace APEEEC_Outlook_AddIn
             {
                 currentMailItem.Recipients.Add(deletedRecipient.Name);
             }
+            logger.Info("Recipient from current mail removed. Item saved.");
         }
 
         private void StartKeyExchange(KeyManager keyManager, String senderEmail, Outlook.Recipient currentRecipient)
@@ -123,68 +133,70 @@ namespace APEEEC_Outlook_AddIn
 
                 ConfirmationKeyExchangeForm confirmationKeyExchangeForm = new ConfirmationKeyExchangeForm();
                 confirmationKeyExchangeForm.Show();
+                logger.Info("Key exchange request initiated by user.");
             }
             else
             {
                 ErrorKeyExchangeForm errorKeyExchangeForm = new ErrorKeyExchangeForm();
                 errorKeyExchangeForm.Show();
+                logger.Info("Key exchange request canceled by user.");
             }
         }
 
         private void EncryptAndSendEmail(Outlook.MailItem currentMailItem, Outlook.Recipient currentRecipient, KeyManager keyManager, String recipientEmail, String senderEmail)
         {
-            try
+            //remove current recipient from mail item
+            currentMailItem.Recipients.Remove(currentRecipient.Index);
+
+            //create new mail item
+            Outlook.Application app = new Outlook.Application();
+            Outlook.MailItem newMailItem = app.CreateItem(Outlook.OlItemType.olMailItem);
+
+            //add recipient to new mail item
+            newMailItem.Recipients.Add(currentRecipient.Name);
+
+            //convert all data from current mail to new mail item
+            //newMailItem.Sender.Address = currentMailItem.Sender.Address;
+
+            //ok, start encryption, sign email, send email
+            Encrypter encrypter = _broker.GetEncryptionHandler().getEncrypter();
+            //save file and set filename
+            String fileName = Path.GetTempFileName();
+            File.WriteAllText(fileName, currentMailItem.Body);
+
+            //set encrypted filename from normal filename plus encrypted
+            String encryptedFileName = Path.GetTempFileName();
+
+            //get recipient key and add it to a list. if there are more recipients, add more
+            Key key = keyManager.GetPublicKey(recipientEmail);
+            IList<KeyId> recipients = new List<KeyId>();
+            recipients.Add(key.Id);
+
+            //create encrypter and set all values accordingly
+            GpgInterfaceResult result = encrypter.EncryptFile(fileName, encryptedFileName, true, false, keyManager.GetSignKeyIDForEmail(senderEmail), recipients, CipherAlgorithm.Aes256);
+            if (CallbackHandler.Callback(result, logger) == true)
             {
-                //remove current recipient from mail item
-                currentMailItem.Recipients.Remove(currentRecipient.Index);
-
-                //create new mail item
-                Outlook.Application app = new Outlook.Application();
-                Outlook.MailItem newMailItem = app.CreateItem(Outlook.OlItemType.olMailItem);
-
-                //add recipient to new mail item
-                newMailItem.Recipients.Add(currentRecipient.Name);
-
-                //convert all data from current mail to new mail item
-                //newMailItem.Sender.Address = currentMailItem.Sender.Address;
-
-                //ok, start encryption, sign email, send email
-                Encrypter encrypter = _broker.GetEncryptionHandler().getEncrypter();
-                //save file and set filename
-                String fileName = Path.GetTempFileName();
-                File.WriteAllText(fileName, currentMailItem.Body);
-
-                //set encrypted filename from normal filename plus encrypted
-                String encryptedFileName = Path.GetTempFileName();
-
-                //get recipient key and add it to a list. if there are more recipients, add more
-                Key key = keyManager.GetPublicKey(recipientEmail);
-                IList<KeyId> recipients = new List<KeyId>();
-                recipients.Add(key.Id);
-
-                //create encrypter and set all values accordingly
-                GpgInterfaceResult result = encrypter.EncryptFile(fileName, encryptedFileName, true, false, keyManager.GetSignKeyIDForEmail(senderEmail), recipients, CipherAlgorithm.Aes256);
-                CallbackHandler.Callback(result, logger);
-
-                //add all encrypted value to new mail body
-                newMailItem.Body = File.ReadAllText(encryptedFileName);
-
-                //delete temporary files
-                File.Delete(fileName);
-                File.Delete(encryptedFileName);
-
-                /*
-                newMailItem.Body += "___________________________________";
-                newMailItem.Body += "Encryption added by APEEEC-Protocol";
-                */
-                newMailItem.Send();
-
+                EncryptionSuccessForm encryptionSuccessForm = new EncryptionSuccessForm();
+                encryptionSuccessForm.Show();
             }
-            catch (KeyNotFoundException keyNotFoundException)
+            else
             {
-                logger.Warn("Key Not Found!");
-                Console.WriteLine(keyNotFoundException.Message);
+                EncryptionFailedForm encryptionFailedForm = new EncryptionFailedForm();
+                encryptionFailedForm.Show();
             }
+
+            //add all encrypted value to new mail body
+            newMailItem.Body = File.ReadAllText(encryptedFileName);
+
+            //delete temporary files
+            File.Delete(fileName);
+            File.Delete(encryptedFileName);
+
+            /*
+            newMailItem.Body += "___________________________________";
+            newMailItem.Body += "Encryption added by APEEEC-Protocol";
+            */
+            newMailItem.Send();
         }
 
         private bool KeyAvailableForEmail (String email)

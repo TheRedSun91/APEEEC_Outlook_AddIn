@@ -117,13 +117,4 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="confirmationNotificationTextBox.Text" xml:space="preserve">
-    <value>The Add-In tried to verify the path for the GnuPG executable and did not find it in the usual path for 64-bit and 32-bit operating systems:
-
-"C:\\Program Files (x86)\\GNU\\GnuPG\\gpg2.exe"
-or
-"C:\\Program Files\\GNU\\GnuPG\\gpg2.exe"
-
-Please install the current version of GnuPG in the standard location and restart the Outlook client.</value>
-  </data>
 </root>

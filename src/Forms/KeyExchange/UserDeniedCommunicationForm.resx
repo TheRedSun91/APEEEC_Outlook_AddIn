@@ -117,13 +117,11 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="confirmationNotificationTextBox.Text" xml:space="preserve">
-    <value>The Add-In tried to verify the path for the GnuPG executable and did not find it in the usual path for 64-bit and 32-bit operating systems:
+  <data name="certificationNotificationTextBox.Text" xml:space="preserve">
+    <value>Attention!
 
-"C:\\Program Files (x86)\\GNU\\GnuPG\\gpg2.exe"
-or
-"C:\\Program Files\\GNU\\GnuPG\\gpg2.exe"
+This e-mail is a negative response to the encrypted communication request. The user does not want to establish an encrypted communication with you.
 
-Please install the current version of GnuPG in the standard location and restart the Outlook client.</value>
+If you want to send him a non-encrypted message you can always do so or try to send another encrypted communication request.</value>
   </data>
 </root>

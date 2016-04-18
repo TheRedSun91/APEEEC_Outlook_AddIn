@@ -10,25 +10,7 @@ using APEEEC_Outlook_AddIn.src.Encryption;
 using APEEEC_Outlook_AddIn.src.WorkflowHandler;
 using NLog;
 using GpgApi;
-
-// TODO:  Führen Sie diese Schritte aus, um das Element auf dem Menüband (XML) zu aktivieren:
-
-// 1: Kopieren Sie folgenden Codeblock in die ThisAddin-, ThisWorkbook- oder ThisDocument-Klasse.
-
-//  protected override Microsoft.Office.Core.IRibbonExtensibility CreateRibbonExtensibilityObject()
-//  {
-//      return new Ribbon();
-//  }
-
-// 2. Erstellen Sie Rückrufmethoden im Abschnitt "Menübandrückrufe" dieser Klasse, um Benutzeraktionen
-//    zu behandeln, z.B. das Klicken auf eine Schaltfläche. Hinweis: Wenn Sie dieses Menüband aus dem Menüband-Designer exportiert haben,
-//    verschieben Sie den Code aus den Ereignishandlern in die Rückrufmethoden, und ändern Sie den Code für die Verwendung mit dem
-//    Programmmodell für die Menübanderweiterung (RibbonX).
-
-// 3. Weisen Sie den Steuerelementtags in der Menüband-XML-Datei Attribute zu, um die entsprechenden Rückrufmethoden im Code anzugeben.  
-
-// Weitere Informationen erhalten Sie in der Menüband-XML-Dokumentation in der Hilfe zu Visual Studio-Tools für Office.
-
+using APEEEC_Outlook_AddIn.src.Forms;
 
 namespace APEEEC_Outlook_AddIn
 {
@@ -86,34 +68,42 @@ namespace APEEEC_Outlook_AddIn
                 Object selObject = Globals.ThisAddIn.Application.ActiveExplorer().Selection[1];
                 if (selObject is Outlook.MailItem)
                 {
+                    logger.Info("Certification import started.");
                     KeyManager keyManager = APEEEC_Broker.GetSingletonBroker().GetKeyManager();
                     Outlook.MailItem currentMailItem = (selObject as Outlook.MailItem);
                     if (currentMailItem.Subject == isPositiveResponse)
                     {
+                        logger.Info("Import Key from positive response.");
                         ImportKeyFromPositiveResponse(currentMailItem, keyManager);
                     }
                     else if (currentMailItem.Subject == isEncryptionRequest)
                     {
+                        logger.Info("Import Key from encryption request.");
                         ImportKeyFromRequest(currentMailItem, keyManager);
                     }
                     else if (currentMailItem.Subject == isNegativeResponse)
                     {
-                        //alert: user does not want to create secure communication
+                        logger.Info("Import from negative response --> not possible. User notified.");
+                        UserDeniedCommunicationForm userDeniedCommunicationForm = new UserDeniedCommunicationForm();
+                        userDeniedCommunicationForm.Show();
                     }
                     else
                     {
-                        //no apeeec mail item
-                        //nothing can be imported
+                        logger.Info("Import from external mail item not possible. User notified.");
+                        NoAPEEECMailItemForm noAPEEECMailItemForm = new NoAPEEECMailItemForm();
+                        noAPEEECMailItemForm.Show();
                     }
                 }
                 else
                 {
                     //no currently selected object
+                    logger.Warn("No item selected to import a public key from.");
                 }
             }
             else
             {
                 //no active explorer
+                logger.Warn("No active explorer.");
             }
         }
 
@@ -122,6 +112,7 @@ namespace APEEEC_Outlook_AddIn
             keyManager.ImportKeyFromMessageAttachments(currentMailItem.Attachments, currentMailItem.SenderEmailAddress);
             FinalKeyImport finalKeyImport = new FinalKeyImport();
             finalKeyImport.Show();
+            logger.Info("Importin key from positive response successful.");
         }
 
         private void ImportKeyFromRequest(Outlook.MailItem currentMailItem, KeyManager keyManager)
@@ -134,6 +125,7 @@ namespace APEEEC_Outlook_AddIn
             System.Windows.Forms.DialogResult dresult = importKeyForm.ShowDialog();
             if (dresult.Equals(System.Windows.Forms.DialogResult.OK))
             {
+                logger.Info("User accepts encrypted communication request.");
                 //check if user has public key, else start certification
                 if (keyManager.GetPublicKey(keyManager.getEmailOfCurrentUser()) != null)
                 {
@@ -141,7 +133,7 @@ namespace APEEEC_Outlook_AddIn
                     {
                         keyManager.ImportKeyFromMessageAttachments(currentMailItem.Attachments, currentMailItem.SenderEmailAddress);
 
-                        //send response with new key (newMail created, add values and send)
+                        //send response with new key
                         keyManager.SendPositiveKeyExchangeResponse(newMail, currentMailItem.Sender, keyManager.getEmailOfCurrentUser());
                     }
                 }
@@ -152,8 +144,7 @@ namespace APEEEC_Outlook_AddIn
             }
             else
             {
-                //send cancel response (newMail created, add values and send)
-
+                //send cancel response
                 keyManager.SendNegativeKeyExchangeResponse(newMail, currentMailItem.Sender, keyManager.getEmailOfCurrentUser());
             }
         }
@@ -173,10 +164,12 @@ namespace APEEEC_Outlook_AddIn
                     String decryptedFileName = Path.GetTempFileName();
                     File.WriteAllText(encryptedFileName, currentMailItem.Body);
                     GpgInterfaceResult result = encryptionHandler.getDecrypter().DecryptFile(encryptedFileName, decryptedFileName);
-                    CallbackHandler.Callback(result, logger);
+                    if (CallbackHandler.Callback(result, logger) == false)
+                    {
+                        ErrorForm errorForm = new ErrorForm();
+                        errorForm.Show();
+                    }
                     currentMailItem.Body = File.ReadAllText(decryptedFileName);
-
-                    //only delete if mail is being closed? or doesnt matter?
                     File.Delete(encryptedFileName);
                     File.Delete(decryptedFileName);
                 }

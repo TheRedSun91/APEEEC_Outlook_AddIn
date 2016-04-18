@@ -248,6 +248,7 @@
     <Compile Include="src\Interfaces\IDecrypter.cs" />
     <Compile Include="src\Signature\OpenPGPSignature.cs" />
     <Compile Include="src\WorkflowHandler\APEEEC_Broker.cs" />
+    <Compile Include="src\WorkflowHandler\CallbackHandler.cs" />
     <Compile Include="src\WorkflowHandler\EncryptionHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
@@ -341,6 +342,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\decryptMessageImage.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src\Exceptions\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
