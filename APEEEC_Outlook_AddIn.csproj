@@ -251,11 +251,23 @@
     <Compile Include="src\Forms\KeyExchange\FinalKeyImport.Designer.cs">
       <DependentUpon>FinalKeyImport.cs</DependentUpon>
     </Compile>
+    <Compile Include="src\Forms\KeyExchange\ImportKeyFailedForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="src\Forms\KeyExchange\ImportKeyFailedForm.Designer.cs">
+      <DependentUpon>ImportKeyFailedForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="src\Forms\KeyExchange\ImportKeyForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="src\Forms\KeyExchange\ImportKeyForm.Designer.cs">
       <DependentUpon>ImportKeyForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="src\Forms\KeyExchange\ImportKeySuccessForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="src\Forms\KeyExchange\ImportKeySuccessForm.Designer.cs">
+      <DependentUpon>ImportKeySuccessForm.cs</DependentUpon>
     </Compile>
     <Compile Include="src\Forms\KeyExchange\KeyExchangeStartForm.cs">
       <SubType>Form</SubType>
@@ -268,6 +280,12 @@
     </Compile>
     <Compile Include="src\Forms\KeyExchange\NoAPEEECMailItemForm.Designer.cs">
       <DependentUpon>NoAPEEECMailItemForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="src\Forms\KeyExchange\SignatureFailedForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="src\Forms\KeyExchange\SignatureFailedForm.Designer.cs">
+      <DependentUpon>SignatureFailedForm.cs</DependentUpon>
     </Compile>
     <Compile Include="src\Forms\KeyExchange\UserDeniedCommunicationForm.cs">
       <SubType>Form</SubType>
@@ -325,14 +343,23 @@
     <EmbeddedResource Include="src\Forms\KeyExchange\FinalKeyImport.resx">
       <DependentUpon>FinalKeyImport.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="src\Forms\KeyExchange\ImportKeyFailedForm.resx">
+      <DependentUpon>ImportKeyFailedForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="src\Forms\KeyExchange\ImportKeyForm.resx">
       <DependentUpon>ImportKeyForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="src\Forms\KeyExchange\ImportKeySuccessForm.resx">
+      <DependentUpon>ImportKeySuccessForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="src\Forms\KeyExchange\KeyExchangeStartForm.resx">
       <DependentUpon>KeyExchangeStartForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="src\Forms\KeyExchange\NoAPEEECMailItemForm.resx">
       <DependentUpon>NoAPEEECMailItemForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="src\Forms\KeyExchange\SignatureFailedForm.resx">
+      <DependentUpon>SignatureFailedForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="src\Forms\KeyExchange\UserDeniedCommunicationForm.resx">
       <DependentUpon>UserDeniedCommunicationForm.cs</DependentUpon>

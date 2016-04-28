@@ -129,7 +129,7 @@ namespace APEEEC_Outlook_AddIn
                 Outlook.MailItem newMail = this.Application.CreateItem(Outlook.OlItemType.olMailItem) as Outlook.MailItem;
 
                 //start key exchange process (send encrypted communication request)
-                keyManager.StartKeyExchange(newMail, senderEmail, currentRecipient);
+                keyManager.SendExchangeKeyRequest(newMail, senderEmail, currentRecipient);
 
                 ConfirmationKeyExchangeForm confirmationKeyExchangeForm = new ConfirmationKeyExchangeForm();
                 confirmationKeyExchangeForm.Show();
@@ -162,10 +162,9 @@ namespace APEEEC_Outlook_AddIn
             Encrypter encrypter = _broker.GetEncryptionHandler().getEncrypter();
             //save file and set filename
             String fileName = Path.GetTempFileName();
-            File.WriteAllText(fileName, currentMailItem.Body);
+            File.WriteAllText(fileName, "Subject: " + currentMailItem.Subject + "\n\nMessage: " + currentMailItem.Body);
 
-            //set encrypted filename from normal filename plus encrypted
-            String encryptedFileName = Path.GetTempFileName();
+            String encryptedFileName = createRandomFileName("encryptedMessage");
 
             //get recipient key and add it to a list. if there are more recipients, add more
             Key key = keyManager.GetPublicKey(recipientEmail);
@@ -186,18 +185,31 @@ namespace APEEEC_Outlook_AddIn
                 encryptionFailedForm.Show();
             }
 
-            //add all encrypted value to new mail body
-            newMailItem.Body = File.ReadAllText(encryptedFileName);
+            //add encrypted and signed attachment to mail item
+            newMailItem.Attachments.Add(encryptedFileName, Outlook.OlAttachmentType.olByValue, 0, encryptedFileName);
 
             //delete temporary files
             File.Delete(fileName);
             File.Delete(encryptedFileName);
 
-            /*
-            newMailItem.Body += "___________________________________";
-            newMailItem.Body += "Encryption added by APEEEC-Protocol";
-            */
+            //overwrite new mail body and subject with standard text message to decrypt message
+            newMailItem.Subject = "Encrypted APEEEC-Protocol Message";
+            newMailItem.Body = "This message was encrypted by the APEEEC-Protocol.";
+            newMailItem.Body += "If you want to decrypt and read the encrypted content please click on the \"Decrypt Message\"-Button in the APEEEC-Protocol-Ribbon of the message.";
+            
             newMailItem.Send();
+        }
+
+        private String createRandomFileName(String stringMessage)
+        {
+            Random random = new Random();
+            String encryptedFileName;
+            do
+            {
+                encryptedFileName = Path.GetTempPath() + stringMessage + random.Next(0, 1000000).ToString("D6") + ".asc";
+            }
+            while (!File.Exists(encryptedFileName));
+            return encryptedFileName;
         }
 
         private bool KeyAvailableForEmail (String email)

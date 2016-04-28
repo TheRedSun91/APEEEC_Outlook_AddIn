@@ -112,7 +112,7 @@ namespace APEEEC_Outlook_AddIn
             keyManager.ImportKeyFromMessageAttachments(currentMailItem.Attachments, currentMailItem.SenderEmailAddress);
             FinalKeyImport finalKeyImport = new FinalKeyImport();
             finalKeyImport.Show();
-            logger.Info("Importin key from positive response successful.");
+            logger.Info("Importing key from positive response successful.");
         }
 
         private void ImportKeyFromRequest(Outlook.MailItem currentMailItem, KeyManager keyManager)
@@ -151,8 +151,6 @@ namespace APEEEC_Outlook_AddIn
 
         public void OnClickDecryptMessageButton(Office.IRibbonControl control)
         {
-            EncryptionHandler encryptionHandler = APEEEC_Broker.GetSingletonBroker().GetEncryptionHandler();
-
             if (Globals.ThisAddIn.Application.ActiveExplorer().Selection.Count > 0)
             {
                 //access currently selected item
@@ -162,17 +160,39 @@ namespace APEEEC_Outlook_AddIn
                     Outlook.MailItem currentMailItem = (selObject as Outlook.MailItem);
                     String encryptedFileName = Path.GetTempFileName();
                     String decryptedFileName = Path.GetTempFileName();
-                    File.WriteAllText(encryptedFileName, currentMailItem.Body);
-                    GpgInterfaceResult result = encryptionHandler.getDecrypter().DecryptFile(encryptedFileName, decryptedFileName);
-                    if (CallbackHandler.Callback(result, logger) == false)
+
+                    foreach (Outlook.Attachment attachment in currentMailItem.Attachments)
                     {
-                        ErrorForm errorForm = new ErrorForm();
-                        errorForm.Show();
+                        if (attachment.FileName.Contains("encryptedMessage"))
+                        {
+                            attachment.SaveAsFile(encryptedFileName);
+                        }
                     }
+
+                    File.WriteAllText(encryptedFileName, currentMailItem.Body);
+                    //verify signature and decrypt file
+                    verifySignatureAndDecryptMessage(encryptedFileName, decryptedFileName);
+
                     currentMailItem.Body = File.ReadAllText(decryptedFileName);
                     File.Delete(encryptedFileName);
                     File.Delete(decryptedFileName);
                 }
+            }
+        }
+
+        private void verifySignatureAndDecryptMessage(String encryptedFileName, String decryptedFileName)
+        {
+            GpgInterfaceResult signatureResult = APEEEC_Broker.GetSingletonBroker().GetSignatureHandler().getSignature().VerifySignature(encryptedFileName);
+            if (CallbackHandler.Callback(signatureResult, logger) == false)
+            {
+                ErrorForm errorForm = new ErrorForm();
+                errorForm.Show();
+            }
+            GpgInterfaceResult result = APEEEC_Broker.GetSingletonBroker().GetEncryptionHandler().getDecrypter().DecryptFile(encryptedFileName, decryptedFileName);
+            if (CallbackHandler.Callback(result, logger) == false)
+            {
+                ErrorForm errorForm = new ErrorForm();
+                errorForm.Show();
             }
         }
 

@@ -5,17 +5,17 @@ namespace APEEEC_Outlook_AddIn.src.WorkflowHandler
 
     class APEEEC_Broker
     {
-        private EncryptionHandler encryptionHandler;
-        private SignatureHandler signatureHandler;
-        private KeyManager keyManager;
+        private EncryptionHandler _encryptionHandler;
+        private SignatureHandler _signatureHandler;
+        private KeyManager _keyManager;
 
         private static APEEEC_Broker _apeeecBroker = null;
 
         private APEEEC_Broker ()
         {
-            encryptionHandler = new EncryptionHandler();
-            signatureHandler = new SignatureHandler();
-            keyManager = new KeyManager();
+            _encryptionHandler = new EncryptionHandler();
+            _signatureHandler = new SignatureHandler();
+            _keyManager = new KeyManager();
         }
 
         public static APEEEC_Broker GetSingletonBroker()
@@ -29,27 +29,27 @@ namespace APEEEC_Outlook_AddIn.src.WorkflowHandler
 
         public EncryptionHandler GetEncryptionHandler()
         {
-            if (encryptionHandler != null)
+            if (_encryptionHandler != null)
             {
-                return encryptionHandler;
+                return _encryptionHandler;
             }
             return null;
         }
 
         public SignatureHandler GetSignatureHandler()
         {
-            if (signatureHandler != null)
+            if (_signatureHandler != null)
             {
-                return signatureHandler;
+                return _signatureHandler;
             }
             return null;
         }
 
         public KeyManager GetKeyManager()
         {
-            if (keyManager != null)
+            if (_keyManager != null)
             {
-                return keyManager;
+                return _keyManager;
             }
             return null;
         }
