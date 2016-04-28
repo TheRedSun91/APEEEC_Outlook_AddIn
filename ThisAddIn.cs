@@ -173,7 +173,8 @@ namespace APEEEC_Outlook_AddIn
             recipients.Add(key.Id);
 
             //create encrypter and set all values accordingly
-            GpgInterfaceResult result = encrypter.EncryptFile(fileName, encryptedFileName, true, false, keyManager.GetSignKeyIDForEmail(senderEmail), recipients, CipherAlgorithm.Aes256);
+            GpgInterfaceResult result = encrypter.EncryptFile(fileName, encryptedFileName, true, false, 
+                keyManager.GetSignKeyIDForEmail(senderEmail), recipients, CipherAlgorithm.Aes256);
             if (CallbackHandler.Callback(result, logger) == true)
             {
                 EncryptionSuccessForm encryptionSuccessForm = new EncryptionSuccessForm();

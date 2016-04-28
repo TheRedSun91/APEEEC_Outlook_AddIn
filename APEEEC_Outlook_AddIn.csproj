@@ -215,6 +215,24 @@
     <Compile Include="src\Forms\Certification\GnuPGMissingForm.Designer.cs">
       <DependentUpon>GnuPGMissingForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="src\Forms\EncryptedCommunication\EncryptionFailedForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="src\Forms\EncryptedCommunication\EncryptionFailedForm.Designer.cs">
+      <DependentUpon>EncryptionFailedForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="src\Forms\EncryptedCommunication\EncryptionSuccessForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="src\Forms\EncryptedCommunication\EncryptionSuccessForm.Designer.cs">
+      <DependentUpon>EncryptionSuccessForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="src\Forms\ErrorForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="src\Forms\ErrorForm.Designer.cs">
+      <DependentUpon>ErrorForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="src\Forms\KeyExchange\ConfirmationKeyExchangeForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -244,6 +262,18 @@
     </Compile>
     <Compile Include="src\Forms\KeyExchange\KeyExchangeStartForm.Designer.cs">
       <DependentUpon>KeyExchangeStartForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="src\Forms\KeyExchange\NoAPEEECMailItemForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="src\Forms\KeyExchange\NoAPEEECMailItemForm.Designer.cs">
+      <DependentUpon>NoAPEEECMailItemForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="src\Forms\KeyExchange\UserDeniedCommunicationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="src\Forms\KeyExchange\UserDeniedCommunicationForm.Designer.cs">
+      <DependentUpon>UserDeniedCommunicationForm.cs</DependentUpon>
     </Compile>
     <Compile Include="src\Interfaces\IDecrypter.cs" />
     <Compile Include="src\Signature\OpenPGPSignature.cs" />
@@ -277,6 +307,15 @@
     <EmbeddedResource Include="src\Forms\Certification\GnuPGMissingForm.resx">
       <DependentUpon>GnuPGMissingForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="src\Forms\EncryptedCommunication\EncryptionFailedForm.resx">
+      <DependentUpon>EncryptionFailedForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="src\Forms\EncryptedCommunication\EncryptionSuccessForm.resx">
+      <DependentUpon>EncryptionSuccessForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="src\Forms\ErrorForm.resx">
+      <DependentUpon>ErrorForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="src\Forms\KeyExchange\ConfirmationKeyExchangeForm.resx">
       <DependentUpon>ConfirmationKeyExchangeForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -291,6 +330,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="src\Forms\KeyExchange\KeyExchangeStartForm.resx">
       <DependentUpon>KeyExchangeStartForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="src\Forms\KeyExchange\NoAPEEECMailItemForm.resx">
+      <DependentUpon>NoAPEEECMailItemForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="src\Forms\KeyExchange\UserDeniedCommunicationForm.resx">
+      <DependentUpon>UserDeniedCommunicationForm.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="APEEEC_Outlook_AddIn_1_TemporaryKey.pfx" />
     <None Include="APEEEC_Outlook_AddIn_TemporaryKey.pfx" />
@@ -343,9 +388,7 @@
   <ItemGroup>
     <None Include="Resources\decryptMessageImage.png" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="src\Exceptions\" />
-  </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

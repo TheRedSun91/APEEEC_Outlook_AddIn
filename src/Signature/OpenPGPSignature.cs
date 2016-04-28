@@ -7,6 +7,7 @@ namespace APEEEC_Outlook_AddIn.src.Signature
     {
         private GpgSign gpgSignature;
         private GpgVerifySignature gpgVerifySignature;
+
         public GpgInterfaceResult Sign(KeyId signatureKeyId, String fileName, String signedFileName, Boolean armored)
         {
             gpgSignature = new GpgSign(signatureKeyId, fileName, signedFileName, armored);

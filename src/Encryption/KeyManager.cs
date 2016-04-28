@@ -95,9 +95,6 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
             GpgGenerateKey generateKey = new GpgGenerateKey(name, email, comment, algorithm, size, expirationDate);
             GpgInterfaceResult result = generateKey.Execute();
             CallbackHandler.Callback(result, logger);
-            logger.Warn("Error-Handling required");
-            //logger.Info("Importing key from message attachment successful.");
-            //logger.Info("Importing key from message attachment failed.");
             ReLoadPublicKeys();
         }
 
