@@ -65,12 +65,13 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
             String fileName = emailAddress + "_" + "publicKey.asc";
             String signedFileName = emailAddress + "_" + "signedPublicKey.asc";
             //check for publicKey in attachment
+            String savedFile = Path.GetTempFileName();
+        
             foreach (Outlook.Attachment attachment in attachments)
             {
-                String savedFile = Path.GetTempFileName();
-                attachment.SaveAsFile(savedFile);
                 if (attachment.FileName == signedFileName)
                 {
+                    attachment.SaveAsFile(savedFile);
                     logger.Info("Importing file signed.");
                     
                     //verify Signature
@@ -83,12 +84,13 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
                     {
                         logger.Warn("Signature not verified!");
                     }
-                    importKeyFromFile(signedFileName);
+                    importKeyFromFile(savedFile);
                 }
                 else if (attachment.FileName == fileName)
                 {
+                    attachment.SaveAsFile(savedFile);
                     logger.Info("Importing file not signed.");
-                    importKeyFromFile(fileName);
+                    importKeyFromFile(savedFile);
                 }
                 File.Delete(savedFile);
             }
@@ -102,8 +104,6 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
             if (CallbackHandler.Callback(result, logger) == true)
             {
                 logger.Info("Key importing successful.");
-                ImportKeySuccessForm importKeySuccessForm = new ImportKeySuccessForm();
-                importKeySuccessForm.Show();
             }
             else
             {
@@ -163,7 +163,7 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
                 newMail.Attachments.Add(
                     keyPath,
                     Outlook.OlAttachmentType.olByValue,
-                    0,
+                    1,
                     keyPath);
                 //add recipient
                 newMail.Recipients.Add(recipient.Name);
@@ -250,8 +250,7 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
             String keyPath = ExportPublicKeyToFile(publicKey, sender);
             SignatureHandler signatureHandler = APEEEC_Broker.GetSingletonBroker().GetSignatureHandler();
             String signedKeyPath = keyPath;
-            signedKeyPath.Remove(keyPath.Length - 13);
-            signedKeyPath += "signedPublicKey.asc";
+            signedKeyPath.Replace("publicKey.asc", "signedPublicKey.asc");
 
             KeyId signatureKeyID = GetSignKeyIDForEmail(sender);
             GpgInterfaceResult result = signatureHandler.getSignature().Sign(signatureKeyID, keyPath, signedKeyPath, true);
@@ -266,6 +265,7 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
                         0,
                         signedKeyPath);
 
+                    logger.Info("File signed.");
                 }
             }
             else
@@ -278,7 +278,7 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
                         Outlook.OlAttachmentType.olByValue,
                         0,
                         keyPath);
-
+                    logger.Warn("File not signed.");
                 }
             }
             //add recipient

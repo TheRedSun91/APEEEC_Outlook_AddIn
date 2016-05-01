@@ -34,7 +34,7 @@
     <PublishUrl>C:\Data\release\</PublishUrl>
     <InstallUrl />
     <TargetCulture>de</TargetCulture>
-    <ApplicationVersion>1.0.0.11</ApplicationVersion>
+    <ApplicationVersion>1.0.0.15</ApplicationVersion>
     <AutoIncrementApplicationRevision>true</AutoIncrementApplicationRevision>
     <UpdateEnabled>false</UpdateEnabled>
     <UpdateInterval>0</UpdateInterval>
@@ -263,12 +263,6 @@
     <Compile Include="src\Forms\KeyExchange\ImportKeyForm.Designer.cs">
       <DependentUpon>ImportKeyForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="src\Forms\KeyExchange\ImportKeySuccessForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="src\Forms\KeyExchange\ImportKeySuccessForm.Designer.cs">
-      <DependentUpon>ImportKeySuccessForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="src\Forms\KeyExchange\KeyExchangeStartForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -348,9 +342,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="src\Forms\KeyExchange\ImportKeyForm.resx">
       <DependentUpon>ImportKeyForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="src\Forms\KeyExchange\ImportKeySuccessForm.resx">
-      <DependentUpon>ImportKeySuccessForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="src\Forms\KeyExchange\KeyExchangeStartForm.resx">
       <DependentUpon>KeyExchangeStartForm.cs</DependentUpon>

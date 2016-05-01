@@ -163,8 +163,8 @@ namespace APEEEC_Outlook_AddIn
             //save file and set filename
             String fileName = Path.GetTempFileName();
             File.WriteAllText(fileName, "Subject: " + currentMailItem.Subject + "\n\nMessage: " + currentMailItem.Body);
-
-            String encryptedFileName = createRandomFileName("encryptedMessage");
+            
+            String encryptedFileName = Path.GetTempFileName();
 
             //get recipient key and add it to a list. if there are more recipients, add more
             Key key = keyManager.GetPublicKey(recipientEmail);
@@ -185,12 +185,19 @@ namespace APEEEC_Outlook_AddIn
                 encryptionFailedForm.Show();
             }
 
-            //add encrypted and signed attachment to mail item
-            newMailItem.Attachments.Add(encryptedFileName, Outlook.OlAttachmentType.olByValue, 0, encryptedFileName);
+            String newFileName;
+            if (encryptedFileName.Length > 0)
+            {
+                Random random = new Random();
+                newFileName = Path.GetTempPath() + "encryptedMessage" + random.Next(0, 1000000).ToString("D6") + ".asc";
+                File.Move(encryptedFileName, newFileName);
+                //add encrypted and signed attachment to mail item
+                newMailItem.Attachments.Add(newFileName, Outlook.OlAttachmentType.olByValue, 1, newFileName);
+                File.Delete(newFileName);
+            }
 
             //delete temporary files
             File.Delete(fileName);
-            File.Delete(encryptedFileName);
 
             //overwrite new mail body and subject with standard text message to decrypt message
             newMailItem.Subject = "Encrypted APEEEC-Protocol Message";
@@ -198,18 +205,6 @@ namespace APEEEC_Outlook_AddIn
             newMailItem.Body += "If you want to decrypt and read the encrypted content please click on the \"Decrypt Message\"-Button in the APEEEC-Protocol-Ribbon of the message.";
             
             newMailItem.Send();
-        }
-
-        private String createRandomFileName(String stringMessage)
-        {
-            Random random = new Random();
-            String encryptedFileName;
-            do
-            {
-                encryptedFileName = Path.GetTempPath() + stringMessage + random.Next(0, 1000000).ToString("D6") + ".asc";
-            }
-            while (!File.Exists(encryptedFileName));
-            return encryptedFileName;
         }
 
         private bool KeyAvailableForEmail (String email)

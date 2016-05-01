@@ -166,16 +166,15 @@ namespace APEEEC_Outlook_AddIn
                         if (attachment.FileName.Contains("encryptedMessage"))
                         {
                             attachment.SaveAsFile(encryptedFileName);
+                            //File.WriteAllText(encryptedFileName, currentMailItem.Body);
+                            //verify signature and decrypt file
+                            verifySignatureAndDecryptMessage(encryptedFileName, decryptedFileName);
+
+                            currentMailItem.Body = File.ReadAllText(decryptedFileName);
+                            File.Delete(encryptedFileName);
+                            File.Delete(decryptedFileName);
                         }
                     }
-
-                    File.WriteAllText(encryptedFileName, currentMailItem.Body);
-                    //verify signature and decrypt file
-                    verifySignatureAndDecryptMessage(encryptedFileName, decryptedFileName);
-
-                    currentMailItem.Body = File.ReadAllText(decryptedFileName);
-                    File.Delete(encryptedFileName);
-                    File.Delete(decryptedFileName);
                 }
             }
         }

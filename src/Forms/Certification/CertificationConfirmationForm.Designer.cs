@@ -41,7 +41,7 @@
             this.confirmationNotificationTextBox.Size = new System.Drawing.Size(260, 199);
             this.confirmationNotificationTextBox.TabIndex = 1;
             this.confirmationNotificationTextBox.Text = "Thank you for creating a new Key-Pair.\r\n\r\nThe process was successful. You can clo" +
-    "se this windows and start with the encryption of your messages.";
+    "se this window and start with the encryption of your messages.";
             // 
             // closeButton
             // 
