@@ -41,55 +41,58 @@ namespace APEEEC_Outlook_AddIn
             if (Item is Outlook.MailItem && Ribbon.encryptionWanted)
             {
                 Outlook.MailItem currentMailItem = Item as Outlook.MailItem;
-                String senderEmail = keyManager.getEmailOfCurrentUser();
-                if (KeyAvailableForEmail(senderEmail))
+                if (!currentMailItem.Subject.Contains("APEEEC"))
                 {
-                    logger.Info("Sending Item started.");
-                    //check for each recipient of the current mail item if a public key is available
-                    foreach (Outlook.Recipient currentRecipient in currentMailItem.Recipients)
+                    String senderEmail = keyManager.getEmailOfCurrentUser();
+                    if (KeyAvailableForEmail(senderEmail))
                     {
-                        //get real smtp email address from exchange server
-                        Outlook.PropertyAccessor propAccessorForRecipient = currentRecipient.PropertyAccessor;
-                        String recipientEmail = keyManager.getEmailFromPropertyAccessor(propAccessorForRecipient);
-                        if (KeyAvailableForEmail(recipientEmail))
+                        logger.Info("Sending Item started.");
+                        //check for each recipient of the current mail item if a public key is available
+                        foreach (Outlook.Recipient currentRecipient in currentMailItem.Recipients)
                         {
-                            logger.Info("Encryption and Sending message started for: " + recipientEmail);
-                            EncryptAndSendEmail(currentMailItem, currentRecipient, keyManager, recipientEmail, senderEmail);
-                            logger.Info("Encryption and Sending message finished.");
+                            //get real smtp email address from exchange server
+                            Outlook.PropertyAccessor propAccessorForRecipient = currentRecipient.PropertyAccessor;
+                            String recipientEmail = keyManager.getEmailFromPropertyAccessor(propAccessorForRecipient);
+                            if (KeyAvailableForEmail(recipientEmail))
+                            {
+                                logger.Info("Encryption and Sending message started for: " + recipientEmail);
+                                EncryptAndSendEmail(currentMailItem, currentRecipient, keyManager, recipientEmail, senderEmail);
+                                logger.Info("Encryption and Sending message finished.");
+                            }
+                            else
+                            {
+                                logger.Info("No key for recipient available. Current mail item saved for: " + recipientEmail);
+                                RemoveRecipientFromCurrentMailAndSaveIndividually(currentMailItem, currentRecipient);
+
+                                //start key exchange
+                                //get Public Key and send it to the recipient for importing the key in a new mail!
+                                logger.Info("Key exchange process started for: " + recipientEmail);
+                                StartKeyExchange(keyManager, senderEmail, currentRecipient);
+                            }
+                        }
+                        if (currentMailItem.Recipients.Count > 0)
+                        {
+                            logger.Info("All active recipients for this message handled. Inactive recipients messages have been saved.");
+                            Cancel = true; //do not send current mail
+                            currentMailItem.Save();
+                            currentMailItem = null;
                         }
                         else
                         {
-                            logger.Info("No key for recipient available. Current mail item saved for: " + recipientEmail);
-                            RemoveRecipientFromCurrentMailAndSaveIndividually(currentMailItem, currentRecipient);
-
-                            //start key exchange
-                            //get Public Key and send it to the recipient for importing the key in a new mail!
-                            logger.Info("Key exchange process started for: " + recipientEmail);
-                            StartKeyExchange(keyManager, senderEmail, currentRecipient);
+                            logger.Info("Message encrypted and sent to all recipients.");
+                            Cancel = true;
+                            currentMailItem.Delete();
                         }
-                    }
-                    if (currentMailItem.Recipients.Count > 0)
-                    {
-                        logger.Info("All active recipients for this message handled. Inactive recipients messages have been saved.");
-                        Cancel = true; //do not send current mail
-                        currentMailItem.Save();
-                        currentMailItem = null;
                     }
                     else
                     {
-                        logger.Info("Message encrypted and sent to all recipients.");
+                        logger.Info("User has no key pair. Key certification started.");
+                        //abort sending email, start certification
+                        keyManager.StartCertification();
+                        currentMailItem.Save();
+                        currentMailItem = null;
                         Cancel = true;
-                        currentMailItem.Delete();
                     }
-                }
-                else
-                {
-                    logger.Info("User has no key pair. Key certification started.");
-                    //abort sending email, start certification
-                    keyManager.StartCertification();
-                    currentMailItem.Save();
-                    currentMailItem = null;
-                    Cancel = true;
                 }
             }
         }

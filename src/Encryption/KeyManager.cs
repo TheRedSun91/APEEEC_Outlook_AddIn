@@ -248,9 +248,11 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
 
             //export and sign key
             String keyPath = ExportPublicKeyToFile(publicKey, sender);
+
+            /*
             SignatureHandler signatureHandler = APEEEC_Broker.GetSingletonBroker().GetSignatureHandler();
             String signedKeyPath = keyPath;
-            signedKeyPath.Replace("publicKey.asc", "signedPublicKey.asc");
+            signedKeyPath = signedKeyPath.Replace("publicKey.asc", "signedPublicKey.asc");
 
             KeyId signatureKeyID = GetSignKeyIDForEmail(sender);
             GpgInterfaceResult result = signatureHandler.getSignature().Sign(signatureKeyID, keyPath, signedKeyPath, true);
@@ -281,6 +283,17 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
                     logger.Warn("File not signed.");
                 }
             }
+            */
+            if (keyPath.Length > 0)
+            {
+                newMail.Attachments.Add(
+                    keyPath,
+                    Outlook.OlAttachmentType.olByValue,
+                    0,
+                    keyPath);
+                logger.Warn("File not signed.");
+            }
+
             //add recipient
             newMail.Recipients.Add(recipient.Address);
             //add the body
@@ -291,7 +304,7 @@ namespace APEEEC_Outlook_AddIn.src.Encryption
             logger.Warn("Error-Handling required");
 
             File.Delete(keyPath);
-            File.Delete(signedKeyPath);
+            //File.Delete(signedKeyPath);
         }
 
         internal void ReLoadPublicKeys()
