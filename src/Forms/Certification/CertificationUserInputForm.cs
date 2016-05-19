@@ -56,5 +56,10 @@ namespace APEEEC_Outlook_AddIn.src.Forms.Certification
                 return false;
             }
         }
+
+        private void cancelButton_Click(object sender, EventArgs e)
+        {
+            this.Dispose();
+        }
     }
 }

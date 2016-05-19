@@ -37,6 +37,7 @@
             this.lastNameTextBox = new System.Windows.Forms.TextBox();
             this.emailAddressTextBox = new System.Windows.Forms.TextBox();
             this.textBox1 = new System.Windows.Forms.TextBox();
+            this.cancelButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // continueButton
@@ -107,12 +108,26 @@
             this.textBox1.TabIndex = 8;
             this.textBox1.Text = resources.GetString("textBox1.Text");
             // 
+            // cancelButton
+            // 
+            this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.cancelButton.Location = new System.Drawing.Point(116, 227);
+            this.cancelButton.Name = "cancelButton";
+            this.cancelButton.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.cancelButton.Size = new System.Drawing.Size(75, 23);
+            this.cancelButton.TabIndex = 9;
+            this.cancelButton.Text = "Cancel";
+            this.cancelButton.UseVisualStyleBackColor = true;
+            this.cancelButton.Click += new System.EventHandler(this.cancelButton_Click);
+            // 
             // CertificationUserInputForm
             // 
             this.AcceptButton = this.continueButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.CancelButton = this.cancelButton;
             this.ClientSize = new System.Drawing.Size(284, 262);
+            this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.emailAddressTextBox);
             this.Controls.Add(this.lastNameTextBox);
@@ -137,5 +152,6 @@
         private System.Windows.Forms.TextBox lastNameTextBox;
         private System.Windows.Forms.TextBox emailAddressTextBox;
         private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.Button cancelButton;
     }
 }
